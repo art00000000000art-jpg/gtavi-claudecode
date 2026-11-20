@@ -5,7 +5,10 @@ Run in PowerShell (no admin needed):
   irm https://raw.githubusercontent.com/art00000000000art-jpg/gtavi-claudecode/main/setup-windows.ps1 | iex
 
 What it does:
-  1. Installs Python 3.12 and ffmpeg with winget if they are missing.
+  1. Finds the Python (3.10+) and ffmpeg you already have: on PATH, in Downloads, on the Desktop,
+     in Program Files. A Python installer or an ffmpeg .zip in Downloads is used as is.
+     Only if nothing is found: installs them with winget, or downloads them from
+     python.org and gyan.dev when winget is missing.
   2. Installs the Python packages from requirements.txt.
   3. Asks 4 questions and creates your page folder in Documents
      (playbook, facts, scoreboard, campaigns, media folders, CLAUDE.md).
@@ -64,6 +67,39 @@ function Install-GtaClipDesk {
         return $a.Trim()
     }
 
+    function Get-File($url, $out) {
+        Invoke-WebRequest -Uri $url -OutFile $out -UseBasicParsing -ErrorAction Stop
+    }
+
+    function Add-UserPath($dir) {
+        $cur = [Environment]::GetEnvironmentVariable('Path', 'User')
+        $parts = @()
+        if ($cur) { $parts = @($cur -split ';' | Where-Object { $_ -and ($_ -ne $dir) }) }
+        $new = (@($dir) + $parts) -join ';'
+        [Environment]::SetEnvironmentVariable('Path', $new, 'User')
+        Refresh-Path
+    }
+
+    function Find-FfmpegBin {
+        if ((Has 'ffmpeg') -and (Has 'ffprobe')) { return 'PATH' }
+        $roots = @(
+            (Join-Path $env:LOCALAPPDATA 'Programs'),
+            (Join-Path $env:USERPROFILE 'Downloads'),
+            [Environment]::GetFolderPath('Desktop'),
+            $env:USERPROFILE,
+            'C:\',
+            $env:ProgramFiles
+        )
+        foreach ($r in $roots) {
+            if ((-not $r) -or (-not (Test-Path $r))) { continue }
+            foreach ($d in @(Get-ChildItem -Path $r -Directory -Filter '*ffmpeg*' -ErrorAction SilentlyContinue)) {
+                $hit = Get-ChildItem -Path $d.FullName -Recurse -Depth 3 -Filter 'ffprobe.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+                if ($hit -and (Test-Path (Join-Path $hit.DirectoryName 'ffmpeg.exe'))) { return $hit.DirectoryName }
+            }
+        }
+        return $null
+    }
+
     function Write-New($rel, $text) {
         $p = Join-Path $page $rel
         if (Test-Path $p) { Warn "kept your existing $rel"; return }
@@ -74,10 +110,11 @@ function Install-GtaClipDesk {
     Say '=== GTA 6 Clip Desk: Windows setup ==='
     Say ''
 
-    if (-not (Has 'winget')) {
-        Warn 'winget was not found. Install "App Installer" from the Microsoft Store, then run this again.'
-        return
-    }
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+    $hasWinget = Has 'winget'
+    $dl = Join-Path $env:USERPROFILE 'Downloads'
+    $tmp = Join-Path $env:TEMP ('gtavi-setup-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
+    New-Item -ItemType Directory -Path $tmp -Force | Out-Null
 
     # 1. Python
     Say '[1/5] Python'
@@ -85,12 +122,36 @@ function Install-GtaClipDesk {
     if ($py) {
         Ok "found $py"
     } else {
-        Say '  Installing Python 3.12 with winget...'
-        & winget install -e --id Python.Python.3.12 --scope user --accept-package-agreements --accept-source-agreements --override '/quiet InstallAllUsers=0 PrependPath=1 Include_test=0'
+        $pyExe = $null
+        $installer = $null
+        if (Test-Path $dl) {
+            $installer = Get-ChildItem -Path $dl -File -Filter 'python-3.1*.exe' -ErrorAction SilentlyContinue |
+                Where-Object { $_.Name -match '^python-3\.1[0-3]\.\d+-amd64( \(\d+\))?\.exe$' } |
+                Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        }
+        if ($installer) {
+            Say "  Installing $($installer.Name) from your Downloads (takes a minute)..."
+            $pyExe = $installer.FullName
+        } elseif ($hasWinget) {
+            Say '  Installing Python 3.12 with winget...'
+            & winget install -e --id Python.Python.3.12 --scope user --accept-package-agreements --accept-source-agreements --override '/quiet InstallAllUsers=0 PrependPath=1 Include_test=0'
+        } else {
+            Say '  Downloading Python 3.12 from python.org...'
+            $pyExe = Join-Path $tmp 'python-3.12.10-amd64.exe'
+            try {
+                Get-File 'https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe' $pyExe
+            } catch {
+                Warn "download failed: $($_.Exception.Message)"
+                $pyExe = $null
+            }
+        }
+        if ($pyExe) {
+            Start-Process -FilePath $pyExe -ArgumentList '/quiet InstallAllUsers=0 PrependPath=1 Include_test=0' -Wait
+        }
         Refresh-Path
         $py = Find-Python
         if (-not $py) {
-            Warn 'Python did not install. Install Python 3.12 from https://www.python.org/downloads/ (tick "Add python.exe to PATH"), then run this again.'
+            Warn 'Python is still missing. Install Python 3.12 from https://www.python.org/downloads/ (tick "Add python.exe to PATH"), then run this again.'
             return
         }
         Ok "installed $py"
@@ -98,30 +159,67 @@ function Install-GtaClipDesk {
     # The plugin's skills call "python", so make sure that name works.
     if (-not ((Has 'python') -and (Test-Python 'python'))) {
         $pdir = Split-Path $py
-        $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
-        [Environment]::SetEnvironmentVariable('Path', "$pdir;$pdir\Scripts;$userPath", 'User')
-        Refresh-Path
+        Add-UserPath (Join-Path $pdir 'Scripts')
+        Add-UserPath $pdir
         Warn "added $pdir to your user PATH so Claude can run 'python'"
     }
 
     # 2. ffmpeg
     Say '[2/5] ffmpeg'
-    if ((Has 'ffmpeg') -and (Has 'ffprobe')) {
+    $ffbin = Find-FfmpegBin
+    if (-not $ffbin) {
+        $ffzip = $null
+        if (Test-Path $dl) {
+            $ffzip = Get-ChildItem -Path $dl -File -Filter 'ffmpeg*.zip' -ErrorAction SilentlyContinue |
+                Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        }
+        if ((-not $ffzip) -and $hasWinget) {
+            Say '  Installing ffmpeg with winget...'
+            & winget install -e --id Gyan.FFmpeg --accept-package-agreements --accept-source-agreements
+            Refresh-Path
+            $ffbin = Find-FfmpegBin
+        }
+        if (-not $ffbin) {
+            if ($ffzip) {
+                Say "  Unpacking $($ffzip.Name) from your Downloads..."
+            } else {
+                Say '  Downloading ffmpeg (about 90 MB) from gyan.dev...'
+                $ffzipPath = Join-Path $tmp 'ffmpeg.zip'
+                try {
+                    Get-File 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip' $ffzipPath
+                    $ffzip = Get-Item $ffzipPath
+                } catch {
+                    Warn "download failed: $($_.Exception.Message)"
+                }
+            }
+            if ($ffzip) {
+                $ffdest = Join-Path $env:LOCALAPPDATA 'Programs\ffmpeg'
+                New-Item -ItemType Directory -Path $ffdest -Force | Out-Null
+                try {
+                    Expand-Archive -Path $ffzip.FullName -DestinationPath $ffdest -Force -ErrorAction Stop
+                } catch {
+                    Warn "unpack failed: $($_.Exception.Message)"
+                }
+                $hit = Get-ChildItem -Path $ffdest -Recurse -Filter 'ffprobe.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+                if ($hit) { $ffbin = $hit.DirectoryName }
+            }
+        }
+        if (-not $ffbin) {
+            Warn 'ffmpeg is still missing. Put ffmpeg-release-essentials.zip from https://www.gyan.dev/ffmpeg/builds/ into Downloads and run this again.'
+            return
+        }
+    }
+    if ($ffbin -eq 'PATH') {
         Ok 'found'
     } else {
-        Say '  Installing ffmpeg with winget...'
-        & winget install -e --id Gyan.FFmpeg --accept-package-agreements --accept-source-agreements
-        Refresh-Path
-        if (Has 'ffmpeg') { Ok 'installed' } else { Warn 'installed, but this window cannot see it yet. It will work after you restart Claude.' }
+        Add-UserPath $ffbin
+        Ok "found in $ffbin (added to your user PATH)"
     }
 
     # 3. Plugin files and Python packages
     Say '[3/5] Python packages (a few minutes the first time)'
-    $tmp = Join-Path $env:TEMP ('gtavi-setup-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
-    New-Item -ItemType Directory -Path $tmp -Force | Out-Null
     $zip = Join-Path $tmp 'repo.zip'
     try {
-        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
         Invoke-WebRequest -Uri "https://github.com/$Repo/archive/refs/heads/main.zip" -OutFile $zip -UseBasicParsing -ErrorAction Stop
         Expand-Archive -Path $zip -DestinationPath $tmp -Force -ErrorAction Stop
     } catch {
