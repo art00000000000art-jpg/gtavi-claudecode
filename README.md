@@ -15,7 +15,7 @@
 
 </div>
 
-> **Copy of the original.** This repository is a copy of [Bodila51/gtavi-claudecode](https://github.com/Bodila51/gtavi-claudecode) by **Bodila51**, kept available while the original repository is offline. It was taken from the public mirror gzonlin/gtavi-claudecode. All credit goes to the original author; the code is published under the original MIT license (see [LICENSE](LICENSE)). Only the install commands and repository links were changed to point at this repository.
+> **Copy of the original.** This repository is a copy of [Bodila51/gtavi-claudecode](https://github.com/Bodila51/gtavi-claudecode) by **Bodila51**, kept available while the original repository is offline. It was taken from the public mirror gzonlin/gtavi-claudecode. All credit goes to the original author; the code is published under the original MIT license (see [LICENSE](LICENSE)). The install commands and repository links point at this repository; later changes (post-launch playbook, spoiler check, Windows setup) are in the commit history.
 
 ```
 /plugin marketplace add art00000000000art-jpg/gtavi-claudecode
@@ -23,6 +23,16 @@
 ```
 
 Two lines in Claude Code. In 10 minutes you have: the tools installed, your page folder, today's trending GTA 6 videos, the best moments picked and your first vertical clips ready to post.
+
+### Windows: one-line setup
+
+Open PowerShell (Win + X, then Terminal) and paste:
+
+```
+irm https://raw.githubusercontent.com/art00000000000art-jpg/gtavi-claudecode/main/setup-windows.ps1 | iex
+```
+
+It installs Python 3.12, ffmpeg and the Python packages, asks the 4 page questions, creates your page folder in Documents (with a `CLAUDE.md` and `START-HERE.txt`), installs the plugin if the `claude` command exists, and copies the first-run prompt to your clipboard. No admin rights needed. It never posts anything and keeps any files that already exist. Then restart the Claude app, open the Code tab in your page folder and paste the prompt.
 
 ## First run: paste this into Claude Code
 
