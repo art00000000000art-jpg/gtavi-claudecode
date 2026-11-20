@@ -35,7 +35,7 @@ python scripts/questions.py --subs GTA6,GTA,GrandTheftAutoV --days 3 [--comments
 
 1. Facts only from official sources (Rockstar, Take-Two, PlayStation, Xbox), logged in `facts.md` with the link. Recheck anything older than 48 hours.
 2. Never invent steps, numbers, dates or menu names. No source, no step. An unanswered question stays a research task.
-3. No leaks, rumors, piracy, exploits or "play early" tricks, even if fans ask for them. Skip those clusters.
+3. No leaks, rumors, piracy, exploits or "play early" tricks, even if fans ask for them. Skip those clusters. Mission help stays spoiler-free: say how to do it, never what happens in the story.
 4. Credit: if a post builds on a fan's clip or find, credit with `🎥 @creator`. Do not quote or name Reddit users; the questions are only a signal of what to cover.
 5. Never imply the page is Rockstar. Use "GTA 6".
 6. Keep all-caps to the hook line only.

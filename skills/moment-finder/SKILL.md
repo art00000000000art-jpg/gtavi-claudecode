@@ -14,7 +14,7 @@ It writes `jobs/<id>/candidates.md`. Signals used: transcript with word timestam
 Then:
 
 1. Read `jobs/<id>/candidates.md` and show each candidate: number, start-end, length, why it scored, transcript line.
-2. Drop spoilers for story moments in launch week, nudity, and anything that looks like a leak.
+2. Drop story moments at any time, not only in launch week: cutscenes, the ending, plot reveals and in-game TV or comedy shows on their own (Rockstar's video policy has them taken down). Candidates marked `WARNING possible story moment` need a close look. Also drop nudity and anything that looks like a leak. Prefer gameplay: driving, chases, NPC reactions, physics, map views, customization, funny fails.
 3. Recommend the best 3 and say what hook angle each suggests.
 4. Next step: `clip-cutter` with `--pick <n>`.
 

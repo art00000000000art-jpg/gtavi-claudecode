@@ -280,7 +280,8 @@ def main():
     info = c.get("info", {})
     save_json(out / f"clip_{a.pick}.json", {"file": str(mp4), "start": s0, "end": e0, "layout": layout, "hook": a.hook or a.title, "title": a.title, "cam": cam,
                                             "source_url": info.get("webpage_url"), "source_title": info.get("title"),
-                                            "source_channel": info.get("channel") or info.get("uploader")})
+                                            "source_channel": info.get("channel") or info.get("uploader"),
+                                            "text": " ".join(w["w"] for w in words if s0 <= w["s"] < e0)[:2000]})
     print(mp4)
 
 
