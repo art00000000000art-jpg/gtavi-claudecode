@@ -35,7 +35,7 @@ Describe what happens on screen. Never put words in the streamer's mouth: no quo
 ## Rules
 
 1. The clip must deliver the hook. If the hook says 3 things, show 3. No clickbait.
-2. No spoilers for story moments in launch week. Label such clips SPOILER in the caption, not in the hook.
+2. No story spoilers at any time: no ending, plot twists, character fates or cutscene clips. Don't hint at them either ("you won't believe what Lucia does"). A SPOILER label is not a workaround; such clips are not posted.
 3. Never imply the page is Rockstar. Never write "official" for fan content.
 4. Use "GTA 6". One emoji at most.
 5. Do not reuse the same hook within a week. Check `log.md`.

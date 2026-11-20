@@ -30,4 +30,4 @@ Run from the project folder with `.venv\Scripts\python scripts\secrets_map.py ..
 2. Credit the finder on every post (`🎥 channel` plus the timestamp link). Never present a creator's find as ours.
 3. No glitches, exploits, money glitches, duplication, leaks or "play early" content. The script refuses them; do not work around it.
 4. Scan output is a transcript guess. Rewrite the name, where and how by hand; do not post the raw quote.
-5. No spoilers for story moments in launch week. Never imply the page is Rockstar. Use "GTA 6". X posts have no hashtags.
+5. No story spoilers at any time: a secret tied to a story reveal or the ending is not posted. Never imply the page is Rockstar. Use "GTA 6". X posts have no hashtags.

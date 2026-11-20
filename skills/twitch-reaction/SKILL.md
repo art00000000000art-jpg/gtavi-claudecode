@@ -32,4 +32,4 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/cut.py" jobs/<id> --pick 1 --layout react 
 
 - Clip a streamer only inside their campaign or with permission. Credit them in the post caption, not on the video.
 - Titles describe what happened. Never invent a quote or an opinion.
-- Run `rule-check` before posting. No spoilers in the title during launch week.
+- Run `rule-check` before posting. No story spoilers at any time: not in the title, not on screen. A streamer reacting to a cutscene or plot reveal is still a cutscene clip; skip it.

@@ -18,7 +18,7 @@ Before starting:
 
 While it runs:
 
-1. Check new clips in `jobs/` every few minutes. Review each one: pick the best, skip spoilers and nudity.
+1. Check new clips in `jobs/` every few minutes. Review each one: pick the best, skip story moments and nudity. Chat spikes often hit during cutscenes and plot reveals; those clips are never posted (Rockstar's video policy has isolated cutscenes taken down).
 2. For each keeper, run `hook-writer` then `clip-cutter` (or use the auto-cut if the script produced one), then `rule-check`.
 3. Send the human one message with the best 1 to 3 clips (caption, credit, file path). They say "yes" and post. Speed matters, so keep it to one message.
 

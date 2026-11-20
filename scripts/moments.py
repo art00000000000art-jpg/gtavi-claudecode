@@ -11,6 +11,7 @@ from pathlib import Path
 import numpy as np
 sys.path.insert(0, str(Path(__file__).parent))
 from common import ffprobe, is_url, job_dir, load_json, run, save_json, tool, ytdlp_base, ytdlp_json
+from spoilers import story_hits
 
 HYPE = re.compile(r"\b(no way|oh my god|omg|what|wait|bro|let'?s go|holy|insane|crazy|yo+|wtf|dude|look at|nah|run|go go)\b", re.I)
 CHAT_HYPE = re.compile(r"(LMAO|LOL|KEKW|OMEGALUL|W+\b|CLIP|💀|😂|🔥|NO WAY|HOLY)", re.I)
@@ -161,8 +162,10 @@ def main():
         if hype[p] > 0: why.append("hype words")
         if heat[p] > 0.5: why.append(f"most replayed {heat[p]:.2f}")
         if w_chat and chatz[p] > 1: why.append("chat spike")
+        story = story_hits(text)  # a hint only: a cutscene with no telltale words is not caught here
         picks.append({"n": len(picks) + 1, "start": round(s0, 2), "end": round(e0, 2), "peak": int(p),
-                      "score": round(float(score[p]), 2), "why": why or ["overall energy"], "text": text[:400]})
+                      "score": round(float(score[p]), 2), "why": why or ["overall energy"], "text": text[:400],
+                      "story_flags": story})
     picks.sort(key=lambda x: x["start"])
     for i, x in enumerate(picks, 1):
         x["n"] = i
@@ -174,7 +177,10 @@ def main():
           f"signals: loudness, transcript ({len(words)} words)" + (", most replayed" if w_heat else "") + (", chat" if w_chat else ""), ""]
     for x in picks:
         md += [f"## {x['n']}. {fmt(x['start'])}-{fmt(x['end'])} ({x['end'] - x['start']:.0f}s) score {x['score']}",
-               f"why: {', '.join(x['why'])}", f"> {x['text']}", ""]
+               f"why: {', '.join(x['why'])}"]
+        if x["story_flags"]:
+            md.append(f"WARNING possible story moment ({', '.join(x['story_flags'])}): check it is not a cutscene or plot reveal")
+        md += [f"> {x['text']}", ""]
     (d / "candidates.md").write_text("\n".join(md), encoding="utf-8")
     print(f"job: {d}\n{len(picks)} candidates -> {d / 'candidates.md'}")
 
